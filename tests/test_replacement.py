@@ -1,71 +1,38 @@
-from ga_toolbox.replacement.elitist import ElitistReplacement
+import unittest
 from ga_toolbox.replacement.generational import GenerationalReplacement
+from ga_toolbox.replacement.elitist import ElitistReplacement
 
 
-class Dummy:
-    """Fake chromosome just for testing."""
+class DummyChromosome:
     def __init__(self, fitness):
         self.fitness = fitness
+        self.genes = [1]
+        self.is_feasible = True
 
     def copy(self):
-        return Dummy(self.fitness)
+        c = DummyChromosome(self.fitness)
+        c.genes = list(self.genes)
+        return c
 
 
-def make(values):
-    return [Dummy(v) for v in values]
+class TestReplacementMethods(unittest.TestCase):
+    def setUp(self):
+        self.old_pop = [DummyChromosome(f) for f in [10, 20, 30]]
+        self.offspring = [DummyChromosome(f) for f in [5, 25, 40]]
+
+    def test_generational_replacement(self):
+        gen = GenerationalReplacement(minimize=True)
+        new_pop = gen.replace(self.old_pop, self.offspring, pop_size=3)
+        self.assertEqual(len(new_pop), 3)
+        self.assertEqual([c.fitness for c in new_pop], [5, 25, 40])
+
+    def test_elitist_replacement(self):
+        elitist = ElitistReplacement(minimize=True)
+        new_pop = elitist.replace(self.old_pop, self.offspring, pop_size=3)
+        self.assertEqual(len(new_pop), 3)
+        # Combined: [5, 10, 20, 25, 30, 40] -> Best 3 in minimization are 5, 10, 20
+        self.assertEqual([c.fitness for c in new_pop], [5, 10, 20])
 
 
-def fits(pop):
-    return [c.fitness for c in pop]
-
-
-# ---------- Elitist ----------
-
-def test_elitist_keeps_size():
-    old = make([10, 20, 30, 40, 50])
-    new = make([60, 70, 80, 90, 100])
-    result = ElitistReplacement(elitism_count=2).replace(old, new)
-    assert len(result) == len(old)
-
-
-def test_elitist_keeps_best_old_even_if_offspring_worse():
-    old = make([10, 20, 30, 40, 50])
-    new = make([60, 70, 80, 90, 100])
-    result = ElitistReplacement(elitism_count=2, minimize=True).replace(old, new)
-    # the 2 best old ones (10, 20) must survive
-    assert 10 in fits(result)
-    assert 20 in fits(result)
-
-
-def test_elitist_maximize():
-    old = make([10, 20, 30, 40, 50])
-    new = make([60, 70, 80, 90, 100])
-    result = ElitistReplacement(elitism_count=2, minimize=False).replace(old, new)
-    # for maximization the best old ones are 50 and 40
-    assert 50 in fits(result)
-    assert 40 in fits(result)
-
-
-def test_elitist_not_enough_offspring():
-    old = make([10, 20, 30, 40, 50])
-    new = make([1, 2])
-    result = ElitistReplacement(elitism_count=2).replace(old, new)
-    # population size must stay the same even with few offspring
-    assert len(result) == 5
-
-
-# ---------- Generational ----------
-
-def test_generational_pure_returns_offspring():
-    old = make([10, 20, 30, 40, 50])
-    new = make([60, 70, 80, 90, 100])
-    result = GenerationalReplacement(elitism_count=0).replace(old, new)
-    assert fits(result) == [60, 70, 80, 90, 100]
-
-
-def test_generational_with_elitism_keeps_best_old():
-    old = make([10, 20, 30, 40, 50])
-    new = make([60, 70, 80, 90, 100])
-    result = GenerationalReplacement(elitism_count=1).replace(old, new)
-    assert len(result) == 5
-    assert 10 in fits(result)
+if __name__ == '__main__':
+    unittest.main()

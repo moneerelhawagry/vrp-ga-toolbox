@@ -1,18 +1,17 @@
-from .base import ReplacementMethod
+from typing import List
+from ga_toolbox.chromosome.base import Chromosome
+from ga_toolbox.replacement.base import ReplacementMethod
 
 
 class GenerationalReplacement(ReplacementMethod):
-    def __init__(self, elitism_count=0, minimize=True):
-        super().__init__(minimize)
-        self.elitism_count = elitism_count  # pure generational
+    """Generational replacement: offspring completely replace the old population."""
 
-    def replace(self, old_pop, offspring):
-        size = len(old_pop)
-
-        if self.elitism_count == 0:
-            return offspring[:size]
-
-        elites = [c.copy() for c in
-                  self.sort_best_first(old_pop)[:self.elitism_count]]
-        best_offspring = self.sort_best_first(offspring)
-        return elites + best_offspring[:size - len(elites)]
+    def replace(
+        self, old_pop: List[Chromosome], offspring: List[Chromosome], pop_size: int = None
+    ) -> List[Chromosome]:
+        target_size = pop_size if pop_size is not None else len(old_pop)
+        if len(offspring) >= target_size:
+            return [ind.copy() for ind in offspring[:target_size]]
+        needed = target_size - len(offspring)
+        sorted_old = self.sort_best_first(old_pop)
+        return [ind.copy() for ind in offspring] + [ind.copy() for ind in sorted_old[:needed]]

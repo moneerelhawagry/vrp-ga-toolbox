@@ -1,15 +1,25 @@
 import random
-from typing import TypeVar
+from typing import Union, TypeVar
+from ga_toolbox.chromosome.base import Chromosome
+from ga_toolbox.mutation.base import MutationMethod
+
 T = TypeVar("T")
 
-class ScrambleMutation:
+
+class ScrambleMutation(MutationMethod):
     """Shuffle genes inside a randomly selected segment."""
-    def mutate(self, chromosome: list[T], rng: random.Random | None = None) -> list[T]:
-        result = chromosome.copy()
-        if len(result) < 2: return result
-        generator = rng if rng is not None else random.Random()
-        left, right = sorted(generator.sample(range(len(result)), 2))
-        segment = result[left:right + 1]
-        generator.shuffle(segment)
-        result[left:right + 1] = segment
-        return result
+
+    def mutate(
+        self, chromosome: Union[Chromosome, list], mutation_rate: float = 1.0, rng: random.Random = None
+    ) -> Union[Chromosome, list]:
+        is_chrom = isinstance(chromosome, Chromosome)
+        genes = chromosome.genes if is_chrom else chromosome
+
+        if len(genes) >= 2 and random.random() < mutation_rate:
+            generator = rng if rng is not None else random.Random()
+            left, right = sorted(generator.sample(range(len(genes)), 2))
+            segment = genes[left : right + 1]
+            generator.shuffle(segment)
+            genes[left : right + 1] = segment
+
+        return chromosome

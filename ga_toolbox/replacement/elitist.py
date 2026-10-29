@@ -1,23 +1,15 @@
-from .base import ReplacementMethod
+from typing import List
+from ga_toolbox.chromosome.base import Chromosome
+from ga_toolbox.replacement.base import ReplacementMethod
 
 
 class ElitistReplacement(ReplacementMethod):
-    def __init__(self, elitism_count=2, minimize=True):
-        super().__init__(minimize)
-        self.elitism_count = elitism_count
+    """Elitist replacement: selects the best individuals from old population + offspring."""
 
-    def replace(self, old_pop, offspring):
-        size = len(old_pop)
-
-    
-        elites = [c.copy() for c in
-                  self.sort_best_first(old_pop)[:self.elitism_count]]
-
-    
-        best_offspring = self.sort_best_first(offspring)
-        new_pop = elites + best_offspring[:size - len(elites)]
-
-        if len(new_pop) < size:
-            extra = self.sort_best_first(old_pop)[len(elites):]
-            new_pop += extra[:size - len(new_pop)]
-        return new_pop
+    def replace(
+        self, old_pop: List[Chromosome], offspring: List[Chromosome], pop_size: int = None
+    ) -> List[Chromosome]:
+        target_size = pop_size if pop_size is not None else len(old_pop)
+        combined = old_pop + offspring
+        sorted_combined = self.sort_best_first(combined)
+        return [ind.copy() for ind in sorted_combined[:target_size]]

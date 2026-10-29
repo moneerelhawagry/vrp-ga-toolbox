@@ -1,25 +1,41 @@
 import random
-from .base import SelectionMethod
+from typing import List
+from ga_toolbox.chromosome.base import Chromosome
+from ga_toolbox.selection.base import SelectionMethod
 
 
 class RouletteWheelSelection(SelectionMethod):
-    def select(self, population):
+    """
+    Roulette Wheel (Fitness Proportionate) Selection Operator:
+    Probability of selection is proportional to an individual's scaled fitness.
+    For minimization, fitness is inverted so lower costs receive higher selection chances.
+    """
+
+    def __init__(self, minimize: bool = True):
+        super().__init__(minimize=minimize)
+
+    def select_one(self, population: List[Chromosome]) -> Chromosome:
+        if not population:
+            raise ValueError("Population cannot be empty")
+
         fitnesses = [c.fitness for c in population]
 
-        
         if self.minimize:
             worst = max(fitnesses)
-            weights = [worst - f + 1 for f in fitnesses]
+            weights = [(worst - f) + 1.0 for f in fitnesses]
         else:
-            lowest = min(fitnesses)
-            weights = [f - lowest + 1 for f in fitnesses]
+            worst = min(fitnesses)
+            weights = [(f - worst) + 1.0 for f in fitnesses]
 
-        # spin the wheel
-        total = sum(weights)
-        spin = random.uniform(0, total)
-        running = 0
-        for chrom, w in zip(population, weights):
-            running += w
-            if running >= spin:
-                return chrom
-        return population[-1] 
+        total_weight = sum(weights)
+        if total_weight <= 0:
+            return random.choice(population)
+
+        spin = random.uniform(0, total_weight)
+        cumulative = 0.0
+        for individual, weight in zip(population, weights):
+            cumulative += weight
+            if cumulative >= spin:
+                return individual
+
+        return population[-1]

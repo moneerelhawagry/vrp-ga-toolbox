@@ -1,18 +1,23 @@
 import random
-from .base import SelectionMethod
+from typing import List
+from ga_toolbox.chromosome.base import Chromosome
+from ga_toolbox.selection.base import SelectionMethod
 
 
 class TournamentSelection(SelectionMethod):
-    def __init__(self, tournament_size=3, minimize=True):
-        super().__init__(minimize)
+    """
+    Tournament Selection Operator:
+    Samples k individuals at random and selects the one with the best fitness.
+    """
+
+    def __init__(self, tournament_size: int = 3, minimize: bool = True):
+        super().__init__(minimize=minimize)
         self.tournament_size = tournament_size
 
-    def select(self, population):
-    
+    def select_one(self, population: List[Chromosome]) -> Chromosome:
         k = min(self.tournament_size, len(population))
         contestants = random.sample(population, k)
 
-        # the best one among them wins
         winner = contestants[0]
         for c in contestants[1:]:
             if self.is_better(c.fitness, winner.fitness):
